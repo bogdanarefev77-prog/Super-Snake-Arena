@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Snake Arena</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0f19;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        #menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(16,24,48,0.98) 0%, rgba(5,10,20,1) 100%);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            gap: 40px;
+            padding: 20px;
+            transition: opacity 0.4s ease;
+        }
+        .menu-panel {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .left-panel {
+            width: 320px;
+            height: 520px;
+        }
+        .right-panel {
+            flex: 1;
+            max-width: 650px;
+            height: 520px;
+            justify-content: transform;
+        }
+        h1 {
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #00F5FF, #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #8fa0c0;
+            padding: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .tab-btn.active {
+            color: #00F5FF;
+            border-bottom: 2px solid #00F5FF;
+            margin-bottom: -2px;
+        }
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .auth-form.active {
+            display: flex;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-size: 0.85rem;
+            color: #8fa0c0;
+        }
+        .form-group input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #00F5FF;
+        }
+        .auth-submit-btn {
+            background: linear-gradient(45deg, #00C6FF, #0072FF);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .auth-submit-btn:hover { opacity: 0.9; }
+        .auth-submit-btn:active { transform: scale(0.98); }
+        
+        .profile-box {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+        .profile-box.active { display: flex; }
+        .welcome-txt { font-size: 1.2rem; color: #8fa0c0; margin-top: 20px;}
+        .welcome-name { font-size: 1.8rem; color: #00FF87; font-weight: bold; margin-bottom: 10px; }
+        .coins-display {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            margin: 20px 0;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid rgba(255, 69, 0, 0.4);
+            color: #FF4500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .logout-btn:hover { background: rgba(255, 69, 0, 0.1); }
+
+        .error-msg {
+            color: #FF4500;
+            font-size: 0.85rem;
+            min-height: 18px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .skins-area {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .skins-title {
+            font-size: 1.1rem;
+            color: #8fa0c0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .skins-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 5px;
+            margin-bottom: 20px;
+        }
+        .skins-grid::-webkit-scrollbar { width: 6px; }
+        .skins-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        
+        .skin-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .skin-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+        .skin-card.selected {
+            border-color: #00F5FF;
+            background: rgba(0, 245, 255, 0.08);
+        }
+        .skin-card.locked {
+            opacity: 0.75;
+        }
+        .skin-preview {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 8px;
+            border-radius: 50%;
+        }
+        .skin-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .skin-status {
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .status-owned { color: #00FF87; }
+        .status-price { color: #FFD700; }
+
+        #play-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #050a14;
+            background: linear-gradient(45deg, #00F5FF, #00FF87);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 255, 135, 0.3);
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        #play-btn:hover:not(:disabled) {
+            transform: scale(1.03);
+            box-shadow: 0 5px 25px rgba(0, 255, 135, 0.5);
+        }
+        #play-btn:disabled {
+            background: #2a354d;
+            color: #5a6987;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* HUD */
+        #hud {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #left-hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 20, 40, 0.75);
+            border-left: 4px solid #00F5FF;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 20px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+        }
+        .hud-line { font-size: 1.1rem; }
+        #hud-score { color: #00F5FF; }
+        #hud-kills { color: #FF4500; }
+        #hud-coins { color: #FFD700; }
+
+        #leaderboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 20, 40, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #fff;
+            min-width: 220px;
+            backdrop-filter: blur(5px);
+        }
+        #leaderboard h3 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            color: #00F5FF;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
+        .lb-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+            font-size: 0.95rem;
+        }
+        .lb-item.player {
+            color: #00FF87;
+            font-weight: bold;
+        }
+
+        #minimap-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 160px;
+            height: 160px;
+            background: rgba(10, 20, 40, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        #minimap {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-container">
+        <!-- Главное меню -->
+        <div id="menu-screen" class="interactive">
+            
+            <!-- Левая панель: Авторизация / Профиль -->
+            <div class="menu-panel left-panel">
+                <h1>Arena</h1>
+                
+                <!-- Блок Входа/Регистрации -->
+                <div id="auth-block" style="display: block;">
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" id="tab-login-btn" onclick="switchAuthTab('login')">Вход</button>
+                        <button class="tab-btn" id="tab-register-btn" onclick="switchAuthTab('register')">Регистрация</button>
+                    </div>
+                    
+                    <!-- Форма Входа -->
+                    <div id="login-form" class="auth-form active">
+                        <div class="form-group">
+                            <label>Никнейм</label>
+                            <input type="text" id="login-username" maxlength="12">
+                        </div>
+                        <div class="form-group">
+                            <label>Пароль</label>
+                            <input type="password" id="login-password" maxlength="16">
+                        </div>
+                        <button class="auth-submit-btn" onclick="handleLogin()">Войти</button>
+                    </div>
+                    
+                    <!-- Форма Регистрации -->
+                    <div id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label>Никнейм (3-12 симв.)</label>
+                            <input type="text" id="reg-username" maxlength="12">
+                        </div>
+                        <div class="form-group">
+                            <label>Пароль (5-16 симв.)</label>
+                            <input type="password" id="reg-password" maxlength="16">
+                        </div>
+                        <div class="form-group">
+                            <label>Повторите пароль</label>
+                            <input type="password" id="reg-password-confirm" maxlength="16">
+                        </div>
+                        <button class="auth-submit-btn" onclick="handleRegister()">Создать аккаунт</button>
+                    </div>
+                    
+                    <div id="auth-error" class="error-msg" style="margin-top: 15px;"></div>
+                </div>
+
+                <!-- Блок Профиля -->
+                <div id="profile-block" class="profile-box">
+                    <div>
+                        <div class="welcome-txt">Вы вошли как:</div>
+                        <div class="welcome-name" id="profile-name">Игрок</div>
+                        <div class="coins-display">💰 <span id="profile-coins">0</span></div>
+                    </div>
+                    <button class="logout-btn" onclick="handleLogout()">Выйти из аккаунта</button>
+                </div>
+            </div>
+
+            <!-- Правая панель: Скины и Старт -->
+            <div class="menu-panel right-panel">
+                <div class="skins-area">
+                    <div class="skins-title">
+                        <span>Выберите червяка</span>
+                    </div>
+                    <div class="skins-grid" id="skinsContainer"></div>
+                    <button id="play-btn" disabled onclick="initGame()">Играть</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Игровой интерфейс (HUD) -->
+        <div id="hud">
+            <div id="left-hud">
+                <div class="hud-line">Очки: <span id="hud-score">0</span></div>
+                <div class="hud-line">Убийства: <span id="hud-kills">0</span></div>
+                <div class="hud-line">Монеты: +<span id="hud-coins">0</span></div>
+            </div>
+            
+            <div id="leaderboard">
+                <h3>Лидеры</h3>
+                <div id="lb-content"></div>
+            </div>
+
+            <div id="minimap-container">
+                <canvas id="minimap" width="160" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimap');
+        const mCtx = minimapCanvas.getContext('2d');
+
+        const ARENA_WIDTH = 4000;
+        const ARENA_HEIGHT = 4000;
+        const MAX_BOTS = 20;
+        const FOOD_COUNT = 600;
+
+        const SKINS = [
+            { id: 'classic', name: 'Классик', type: 'solid', color: '#4CAF50', price: 0 },
+            { id: 'candy', name: 'Конфетка', type: 'stripe', color1: '#FF69B4', color2: '#FFFFFF', price: 0 },
+            { id: 'cyber', name: 'Кибер неоно', type: 'glow', color: '#00F5FF', price: 100 },
+            { id: 'tiger', name: 'Тигр', type: 'stripe', color1: '#FF4500', color2: '#333333', price: 150 },
+            { id: 'gold', name: 'Золото', type: 'gradient', color1: '#FFD700', color2: '#B8860B', price: 250 },
+            { id: 'ninja', name: 'Ниндзя', type: 'ninja', color: '#1A1A1A', price: 300 },
+            { id: 'ruby', name: 'Рубин', type: 'glow', color: '#E0115F', price: 350 },
+            { id: 'emerald', name: 'Изумруд', type: 'solid', color: '#50C878', price: 400 },
+            { id: 'sapphire', name: 'Сапфир', type: 'gradient', color1: '#0F52BA', color2: '#000080', price: 450 },
+            { id: 'toxic', name: 'Токсик', type: 'stripe', color1: '#7FFF00', color2: '#4B0082', price: 500 },
+            { id: 'space', name: 'Космос', type: 'glow', color: '#8A2BE2', price: 550 },
+            { id: 'sunset', name: 'Закат', type: 'gradient', color1: '#FF4500', color2: '#FF8C00', price: 600 },
+            { id: 'magma', name: 'Магма', type: 'stripe', color1: '#FF3300', color2: '#111111', price: 700 },
+            { id: 'ghost', name: 'Призрак', type: 'solid', color: '#E6E6FA', price: 800 },
+            { id: 'shadow', name: 'Тень', type: 'ninja', color: '#0D0D0D', price: 1000 }
+        ];
+
+        const BOT_NAMES = [
+            'Alpha', 'Striker', 'Shadow', 'NeonWorm', 'Glitch', 'Python', 'Anaconda', 'Cobra',
+            'Viper', 'Spike', 'Hunter', 'Crawler', 'Toxic', 'Racer', 'Blitz', 'Turbo', 'GamerX',
+            'Doom', 'Phantom', 'Galaxy', 'Nebula', 'Titan', 'Apex', 'Pixel'
+        ];
+
+        // Системные переменные пользователей
+        let usersDB = JSON.parse(localStorage.getItem('snake_users_db')) || {};
+        let currentUser = null;
+        let selectedSkinIndex = 0;
+        let gameActive = false;
+
+        // Переменные сессии
+        let playerKills = 0;
+        let playerCoinsEarned = 0;
+
+        // Входной инпут клавиш (WASD и стрелки)
+        let keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, Shift: false };
+        let camera = { x: 0, y: 0 };
+        let player = null;
+        let snakes = [];
+        let foods = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Слушатели кнопок управления
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') keys.w = true;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф') keys.a = true;
+            if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') keys.s = true;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'в' || e.key === 'В') keys.d = true;
+            if (e.key in keys) keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ц' || e.key === 'Ц') keys.w = false;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ф' || e.key === 'Ф') keys.a = false;
+            if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') keys.s = false;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'в' || e.key === 'В') keys.d = false;
+            if (e.key in keys) keys[e.key] = false;
+        });
+
+        // Работа с вкладками авторизации
+        function switchAuthTab(tab) {
+            document.getElementById('auth-error').innerText = '';
+            if (tab === 'login') {
+                document.getElementById('tab-login-btn').classList.add('active');
+                document.getElementById('tab-register-btn').classList.remove('active');
+                document.getElementById('login-form').classList.add('active');
+                document.getElementById('register-form').classList.remove('active');
+            } else {
+                document.getElementById('tab-login-btn').classList.remove('active');
+                document.getElementById('tab-register-btn').classList.add('active');
+                document.getElementById('login-form').classList.remove('active');
+                document.getElementById('register-form').classList.add('active');
+            }
+        }
+
+        // Логика авторизации
+        function handleRegister() {
+            const u = document.getElementById('reg-username').value.trim();
+            const p = document.getElementById('reg-password').value;
+            const pc = document.getElementById('reg-password-confirm').value;
+            const err = document.getElementById('auth-error');
+            err.innerText = '';
+
+            if (u.length < 3 || u.length > 12) { err.innerText = 'Никнейм должен быть от 3 до 12 символов!'; return; }
+            if (p.length < 5 || p.length > 16) { err.innerText = 'Пароль должен быть от 5 до 16 символов!'; return; }
+            if (p !== pc) { err.innerText = 'Пароли не совпадают!'; return; }
+            
+            if (usersDB[u.toLowerCase()] || BOT_NAMES.map(n=>n.toLowerCase()).includes(u.toLowerCase())) {
+                err.innerText = 'Такой никнейм уже занят!';
+                return;
+            }
+
+            // Создаем пользователя
+            usersDB[u.toLowerCase()] = {
+                username: u,
+                password: p,
+                coins: 0,
+                unlockedSkins: ['classic', 'candy']
+            };
+            localStorage.setItem('snake_users_db', JSON.stringify(usersDB));
+            
+            // Входим автоматически
+            loginUser(u.toLowerCase());
+            
+            document.getElementById('reg-username').value = '';
+            document.getElementById('reg-password').value = '';
+            document.getElementById('reg-password-confirm').value = '';
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('login-username').value.trim().toLowerCase();
+            const p = document.getElementById('login-password').value;
+            const err = document.getElementById('auth-error');
+            err.innerText = '';
+
+            if (!usersDB[u] || usersDB[u].password !== p) {
+                err.innerText = 'Неверный никнейм или пароль!';
+                return;
+            }
+
+            loginUser(u);
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function loginUser(lowerName) {
+            currentUser = usersDB[lowerName];
+            
+            document.getElementById('auth-block').style.display = 'none';
+            document.getElementById('profile-block').classList.add('active');
+            document.getElementById('profile-name').innerText = currentUser.username;
+            document.getElementById('profile-coins').innerText = currentUser.coins;
+            
+            document.getElementById('play-btn').disabled = false;
+            renderSkins();
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('profile-block').classList.remove('active');
+            document.getElementById('auth-block').style.display = 'block';
+            document.getElementById('play-btn').disabled = true;
+            switchAuthTab('login');
+            renderSkins();
+        }
+
+        // Отрисовка скинов в меню
+        function renderSkins() {
+            const container = document.getElementById('skinsContainer');
+            container.innerHTML = '';
+
+            SKINS.forEach((skin, idx) => {
+                const isUnlocked = currentUser ? currentUser.unlockedSkins.includes(skin.id) : false;
+                const isSelected = selectedSkinIndex === idx;
+
+                const card = document.createElement('div');
+                card.className = `skin-card ${isSelected ? 'selected' : ''} ${!isUnlocked ? 'locked' : ''}`;
+                card.onclick = () => selectSkin(idx);
+
+                const preview = document.createElement('div');
+                preview.className = 'skin-preview';
+                
+                if(skin.type === 'solid' || skin.type === 'glow') preview.style.backgroundColor = skin.color;
+                if(skin.type === 'stripe') preview.style.background = `repeating-linear-gradient(45deg, ${skin.color1}, ${skin.color1} 8px, ${skin.color2} 8px, ${skin.color2} 16px)`;
+                if(skin.type === 'gradient') preview.style.background = `linear-gradient(45deg, ${skin.color1}, ${skin.color2})`;
+                if(skin.type === 'ninja') preview.style.backgroundColor = skin.color;
+                if(skin.type === 'glow') preview.style.boxShadow = `0 0 10px ${skin.color}`;
+
+                const name = document.createElement('div');
+                name.className = 'skin-name';
+                name.innerText = skin.name;
+
+                const status = document.createElement('div');
+                status.className = 'skin-status';
+                if (!currentUser) {
+                    status.innerText = 'Войдите';
+                    status.style.color = '#8fa0c0';
+                } else if (isUnlocked) {
+                    status.innerText = 'Выбран';
+                    status.className += ' status-owned';
+                    if(!isSelected) status.innerText = 'Доступен';
+                } else {
+                    status.innerText = `💰 ${skin.price}`;
+                    status.className += ' status-price';
+                }
+
+                card.appendChild(preview);
+                card.appendChild(name);
+                card.appendChild(status);
+                container.appendChild(card);
+            });
+        }
+
+        function selectSkin(idx) {
+            if (!currentUser) return;
+            const skin = SKINS[idx];
+            const isUnlocked = currentUser.unlockedSkins.includes(skin.id);
+
+            if (isUnlocked) {
+                selectedSkinIndex = idx;
+                renderSkins();
+            } else {
+                // Попытка покупки
+                if (currentUser.coins >= skin.price) {
+                    currentUser.coins -= skin.price;
+                    currentUser.unlockedSkins.push(skin.id);
+                    usersDB[currentUser.username.toLowerCase()] = currentUser;
+                    localStorage.setItem('snake_users_db', JSON.stringify(usersDB));
+                    
+                    selectedSkinIndex = idx;
+                    document.getElementById('profile-coins').innerText = currentUser.coins;
+                    renderSkins();
+                } else {
+                    document.getElementById('auth-error').innerText = 'Недостаточно монет!';
+                    setTimeout(() => { if(document.getElementById('auth-error').innerText === 'Недостаточно монет!') document.getElementById('auth-error').innerText = ''; }, 3000);
+                }
+            }
+        }
+
+        renderSkins(); // Стартовый рендер (все залокано до авторизации)
+
+        // Игровые классы
+        class Food {
+            constructor(x, y, value, isDeadBody = false) {
+                this.x = x || Math.random() * ARENA_WIDTH;
+                this.y = y || Math.random() * ARENA_HEIGHT;
+                this.value = value || Math.floor(Math.random() * 5) + 2;
+                this.radius = isDeadBody ? Math.max(4, this.value * 0.6) : Math.max(3, this.value);
+                this.color = `hsl(${Math.random() * 360}, 100%, 65%)`;
+                this.pulse = Math.random() * Math.PI;
+            }
+            draw() {
+                this.pulse += 0.05;
+                let currentRadius = this.radius + Math.sin(this.pulse) * 1;
+                if(currentRadius < 1) currentRadius = 1;
+                ctx.save();
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, currentRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class Snake {
+            constructor(x, y, name, skin, isBot = true, initialScore = 0) {
+                this.name = name;
+                this.skin = skin;
+                this.isBot = isBot;
+                this.x = x;
+                this.y = y;
+                this.angle = Math.random() * Math.PI * 2;
+                this.score = initialScore;
+                this.speed = 3.5;
+                this.baseSegmentDist = 14;
+                this.isDead = false;
+
+                this.segments = [];
+                let length = 3 + Math.floor(this.score / 35);
+                for(let i = 0; i < length; i++) {
+                    this.segments.push({ x: this.x - Math.cos(this.angle) * i * this.baseSegmentDist, y: this.y - Math.sin(this.angle) * i * this.baseSegmentDist });
+                }
+                this.aiTimer = 0;
+            }
+
+            get radius() {
+                return 12 + Math.min(15, this.score * 0.008);
+            }
+
+            update() {
+                if (this.isDead) return;
+
+                let targetLen = 3 + Math.floor(this.score / 35);
+                while(this.segments.length < targetLen) {
+                    let last = this.segments[this.segments.length - 1] || this;
+                    this.segments.push({ x: last.x, y: last.y });
+                }
+
+                // Логика управления скоростью и углами
+                let currentSpeed = this.speed;
+                if (!this.isBot) {
+                    // Обработка клавиш WASD / Стрелок
+                    let moveX = 0;
+                    let moveY = 0;
+                    if (keys.w || keys.ArrowUp) moveY = -1;
+                    if (keys.s || keys.ArrowDown) moveY = 1;
+                    if (keys.a || keys.ArrowLeft) moveX = -1;
+                    if (keys.d || keys.ArrowRight) moveX = 1;
+
+                    if (moveX !== 0 || moveY !== 0) {
+                        this.angle = Math.atan2(moveY, moveX);
+                    }
+
+                    // Ускорение Shift
+                    if (keys.Shift && this.score > 10) {
+                        currentSpeed = 6.0;
+                        if (Math.random() < 0.15) {
+                            this.score -= 3;
+                            let lastSeg = this.segments[this.segments.length - 1];
+                            foods.push(new Food(lastSeg.x + (Math.random()-0.5)*15, lastSeg.y + (Math.random()-0.5)*15, 2, true));
+                        }
+                    }
+                } else {
+                    // Простой AI
+                    this.aiTimer--;
+                    if(this.aiTimer <= 0) {
+                        this.aiTimer = Math.floor(Math.random() * 20) + 15;
+                        let closestFood = null;
+                        let minDist = 350;
+                        for(let f of foods) {
+                            let d = Math.hypot(f.x - this.x, f.y - this.y);
+                            if(d < minDist) { minDist = d; closestFood = f; }
+                        }
+                        if(closestFood) {
+                            this.angle = Math.atan2(closestFood.y - this.y, closestFood.x - this.x);
+                        } else {
+                            this.angle += (Math.random() - 0.5) * 1.0;
+                        }
+
+                        // Обход стен
+                        let edgeDist = 180;
+                        if (this.x < edgeDist) this.angle = 0;
+                        if (this.x > ARENA_WIDTH - edgeDist) this.angle = Math.PI;
+                        if (this.y < edgeDist) this.angle = Math.PI / 2;
+                        if (this.y > ARENA_HEIGHT - edgeDist) this.angle = -Math.PI / 2;
+                    }
+                }
+
+                // Движение вперед
+                this.x += Math.cos(this.angle) * currentSpeed;
+                this.y += Math.sin(this.angle) * currentSpeed;
+
+                this.segments[0].x = this.x;
+                this.segments[0].y = this.y;
+
+                let segmentDist = this.baseSegmentDist + this.radius * 0.1;
+                for (let i = 1; i < this.segments.length; i++) {
+                    let prev = this.segments[i - 1];
+                    let curr = this.segments[i];
+                    let dx = curr.x - prev.x;
+                    let dy = curr.y - prev.y;
+                    let dist = Math.hypot(dx, dy);
+
+                    if (dist > segmentDist) {
+                        let a = Math.atan2(dy, dx);
+                        curr.x = prev.x + Math.cos(a) * segmentDist;
+                        curr.y = prev.y + Math.sin(a) * segmentDist;
+                    }
+                }
+
+                if (this.x < 0 || this.x > ARENA_WIDTH || this.y < 0 || this.y > ARENA_HEIGHT) {
+                    this.die(null);
+                }
+            }
+
+            draw() {
+                if (this.isDead) return;
+                let r = this.radius;
+
+                for (let i = this.segments.length - 1; i > 0; i--) {
+                    let seg = this.segments[i];
+                    ctx.save();
+                    this.applySkinStyle(i);
+                    ctx.beginPath();
+                    let segRadius = r;
+                    if(i > this.segments.length - 5) {
+                        let factor = (this.segments.length - i) / 5;
+                        segRadius = r * (0.6 + factor * 0.4);
+                    }
+                    ctx.arc(seg.x, seg.y, segRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                ctx.save();
+                this.applySkinStyle(0);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, r * 1.1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                if (this.skin.type === 'ninja') {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath(); ctx.arc(r * 0.5, -r * 0.4, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(r * 0.5, r * 0.4, 3, 0, Math.PI * 2); ctx.fill();
+                } else {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath(); ctx.arc(r * 0.4, -r * 0.4, r * 0.28, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(r * 0.4, r * 0.4, r * 0.28, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath(); ctx.arc(r * 0.5, -r * 0.4, r * 0.14, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(r * 0.5, r * 0.4, r * 0.14, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+
+                if(!this.isBot || this.score > 500) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.name, this.x, this.y - r - 8);
+                    ctx.restore();
+                }
+            }
+
+            applySkinStyle(index) {
+                let s = this.skin;
+                if (s.type === 'solid' || s.type === 'ninja') {
+                    ctx.fillStyle = s.color;
+                } else if (s.type === 'glow') {
+                    ctx.fillStyle = s.color;
+                    if(index === 0) { ctx.shadowBlur = 15; ctx.shadowColor = s.color; }
+                } else if (s.type === 'stripe') {
+                    ctx.fillStyle = (index % 2 === 0) ? s.color1 : s.color2;
+                } else if (s.type === 'gradient') {
+                    ctx.fillStyle = (index === 0) ? '#FF4500' : s.color1;
+                }
+            }
+
+            die(killer) {
+                if (this.isDead) return;
+                this.isDead = true;
+
+                this.segments.forEach((seg, i) => {
+                    if (i % 2 === 0 && seg.x > 0 && seg.x < ARENA_WIDTH && seg.y > 0 && seg.y < ARENA_HEIGHT) {
+                        foods.push(new Food(seg.x + (Math.random()-0.5)*10, seg.y + (Math.random()-0.5)*10, Math.floor(Math.random()*8)+5, true));
+                    }
+                });
+
+                if (killer && killer === player) {
+                    playerKills++;
+                    playerCoinsEarned += 15;
+                    if(currentUser) {
+                        currentUser.coins += 15;
+                        usersDB[currentUser.username.toLowerCase()] = currentUser;
+                        localStorage.setItem('snake_users_db', JSON.stringify(usersDB));
+                        document.getElementById('profile-coins').innerText = currentUser.coins;
+                    }
+                }
+
+                if (!this.isBot) {
+                    setTimeout(() => { endGame(); }, 1500);
+                }
+            }
+        }
+
+        function initGame() {
+            if (!currentUser) return;
+            foods = [];
+            snakes = [];
+            playerKills = 0;
+            playerCoinsEarned = 0;
+
+            player = new Snake(ARENA_WIDTH / 2, ARENA_HEIGHT / 2, currentUser.username, SKINS[selectedSkinIndex], false, 0);
+            snakes.push(player);
+
+            for(let i = 0; i < MAX_BOTS; i++) {
+                let bX = Math.random() * (ARENA_WIDTH - 200) + 100;
+                let bY = Math.random() * (ARENA_HEIGHT - 200) + 100;
+                if (Math.hypot(bX - player.x, bY - player.y) < 300) bX += 400;
+
+                let bName = BOT_NAMES[i % BOT_NAMES.length] + ` [AI]`;
+                let bSkin = SKINS[Math.floor(Math.random() * SKINS.length)];
+                let randScore = Math.floor(Math.random() * 1450) + 50;
+                snakes.push(new Snake(bX, bY, bName, bSkin, true, randScore));
+            }
+
+            for(let i = 0; i < FOOD_COUNT; i++) foods.push(new Food());
+
+            document.getElementById('menu-screen').style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById('menu-screen').style.display = 'none';
+                document.getElementById('hud').style.display = 'block';
+                gameActive = true;
+            }, 400);
+        }
+
+        function endGame() {
+            gameActive = false;
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'flex';
+            setTimeout(() => { document.getElementById('menu-screen').style.opacity = 1; }, 50);
+            renderSkins();
+        }
+
+        function gameLoop() {
+            requestAnimationFrame(gameLoop);
+
+            ctx.fillStyle = '#0b0f19';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!gameActive) {
+                drawGrid({x: ARENA_WIDTH/2 - canvas.width/2, y: ARENA_HEIGHT/2 - canvas.height/2});
+                return;
+            }
+
+            camera.x += (player.x - canvas.width / 2 - camera.x) * 0.1;
+            camera.y += (player.y - canvas.height / 2 - camera.y) * 0.1;
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            drawGrid(camera);
+            drawArenaBorders();
+
+            for(let f of foods) f.draw();
+            for(let s of snakes) { s.update(); s.draw(); }
+
+            checkMechanics();
+            ctx.restore();
+
+            updateHUD();
+            drawMinimap();
+        }
+
+        function drawGrid(cam) {
+            ctx.strokeStyle = '#161f33';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+            let startX = Math.floor(cam.x / gridSize) * gridSize;
+            let startY = Math.floor(cam.y / gridSize) * gridSize;
+
+            ctx.beginPath();
+            for (let x = startX; x < startX + canvas.width + gridSize; x += gridSize) {
+                if (x >= 0 && x <= ARENA_WIDTH) {
+                    ctx.moveTo(x, Math.max(0, cam.y));
+                    ctx.lineTo(x, Math.min(ARENA_HEIGHT, cam.y + canvas.height));
+                }
+            }
+            for (let y = startY; y < startY + canvas.height + gridSize; y += gridSize) {
+                if (y >= 0 && y <= ARENA_HEIGHT) {
+                    ctx.moveTo(Math.max(0, cam.x), y);
+                    ctx.lineTo(Math.min(ARENA_WIDTH, cam.x + canvas.width), y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        function drawArenaBorders() {
+            ctx.save();
+            ctx.strokeStyle = '#FF0055';
+            ctx.lineWidth = 8;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#FF0055';
+            ctx.strokeRect(0, 0, ARENA_WIDTH, ARENA_HEIGHT);
+            ctx.restore();
+        }
+
+        function checkMechanics() {
+            // Поедание еды
+            for (let s of snakes) {
+                if (s.isDead) continue;
+                for (let i = foods.length - 1; i >= 0; i--) {
+                    let f = foods[i];
+                    if (Math.hypot(s.x - f.x, s.y - f.y) < s.radius + f.radius) {
+                        s.score += f.value;
+                        foods.splice(i, 1);
+                    }
+                }
+            }
+            while (foods.length < FOOD_COUNT) foods.push(new Food());
+
+            // Коллизии
+            for (let s1 of snakes) {
+                if (s1.isDead) continue;
+                for (let s2 of snakes) {
+                    if (s2.isDead || s1 === s2) continue;
+
+                    for (let i = 0; i < s2.segments.length; i++) {
+                        if (i === 0) {
+                            if (Math.hypot(s1.x - s2.x, s1.y - s2.y) < (s1.radius + s2.radius) * 0.9) {
+                                if (s1.score <= s2.score) { s1.die(s2); break; }
+                            }
+                            continue;
+                        }
+                        let seg = s2.segments[i];
+                        if (Math.hypot(s1.x - seg.x, s1.y - seg.y) < s1.radius + s2.radius * 0.8) {
+                            s1.die(s2);
+                            break;
+                        }
+                    }
+                    if (s1.isDead) break;
+                }
+            }
+
+            // Респавн ботов
+            for(let i = snakes.length - 1; i >= 0; i--) {
+                if(snakes[i].isDead && snakes[i].isBot) {
+                    snakes.splice(i, 1);
+                    let bX = Math.random() * (ARENA_WIDTH - 200) + 100;
+                    let bY = Math.random() * (ARENA_HEIGHT - 200) + 100;
+                    let bName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)] + ` [AI]`;
+                    let bSkin = SKINS[Math.floor(Math.random() * SKINS.length)];
+                    let randScore = Math.floor(Math.random() * 400) + 50;
+                    snakes.push(new Snake(bX, bY, bName, bSkin, true, randScore));
+                }
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = player.score;
+            document.getElementById('hud-kills').innerText = playerKills;
+            document.getElementById('hud-coins').innerText = playerCoinsEarned;
+
+            let sorted = [...snakes].sort((a, b) => b.score - a.score);
+            let lbContent = document.getElementById('lb-content');
+            lbContent.innerHTML = '';
+
+            let topCount = Math.min(5, sorted.length);
+            for(let i = 0; i < topCount; i++) {
+                let s = sorted[i];
+                let item = document.createElement('div');
+                item.className = `lb-item ${s === player ? 'player' : ''}`;
+                
+                let nameSpan = document.createElement('span');
+                nameSpan.innerText = `${i + 1}. ${s.name.replace(' [AI]', '')}`;
+                
+                let scoreSpan = document.createElement('span');
+                scoreSpan.innerText = s.score;
+
+                item.appendChild(nameSpan);
+                item.appendChild(scoreSpan);
+                lbContent.appendChild(item);
+            }
+        }
+
+        function drawMinimap() {
+            mCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+            
+            // Находим короля
+            let sorted = [...snakes].sort((a, b) => b.score - a.score);
+            let king = sorted[0];
+
+            for (let s of snakes) {
+                if (s.isDead) continue;
+                let mmX = (s.x / ARENA_WIDTH) * minimapCanvas.width;
+                let mmY = (s.y / ARENA_HEIGHT) * minimapCanvas.height;
+
+                if (s === player) {
+                    mCtx.fillStyle = '#00FF87';
+                    mCtx.beginPath(); mCtx.arc(mmX, mmY, 4, 0, Math.PI * 2); mCtx.fill();
+                } else if (s === king) {
+                    // Рисуем короля в виде коронной/крупной золотой точки с обводкой
+                    mCtx.save();
+                    mCtx.fillStyle = '#FFD700';
+                    mCtx.strokeStyle = '#FFFFFF';
+                    mCtx.lineWidth = 1.5;
+                    mCtx.beginPath();
+                    mCtx.arc(mmX, mmY, 6, 0, Math.PI * 2);
+                    mCtx.fill();
+                    mCtx.stroke();
+                    mCtx.restore();
+                } else {
+                    mCtx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    mCtx.beginPath(); mCtx.arc(mmX, mmY, 2, 0, Math.PI * 2); mCtx.fill();
+                }
+            }
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
